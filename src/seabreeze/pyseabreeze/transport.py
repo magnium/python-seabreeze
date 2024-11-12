@@ -154,6 +154,12 @@ class USBTransport(PySeaBreezeTransport[USBTransportHandle]):
                 pyusb_device.detach_kernel_driver(0)
         except NotImplementedError:
             pass  # unavailable on some systems/backends
+        except usb.core.USBError as err:
+            if err.errno == 13: # Access denied
+                self._opened = True
+                raise USBTransportDeviceInUse(
+                    "device probably used by another thread/process"
+                )
         try:
             pyusb_device.set_configuration()
         except usb.core.USBError as err:
